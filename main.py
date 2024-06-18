@@ -61,7 +61,7 @@ def check_and_send_logs():
     previous_logs = get_previous_logs()
 
     if current_logs == previous_logs:
-        print("ログに変更はありません。")
+        print(".", end="")
         return
 
     diff = list(difflib.unified_diff(previous_logs.splitlines(), current_logs.splitlines(), lineterm=''))
