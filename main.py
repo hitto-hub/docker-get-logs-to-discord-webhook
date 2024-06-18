@@ -81,6 +81,9 @@ if __name__ == "__main__":
     # 5秒ごとにcheck_and_send_logs関数を実行するスケジュールを設定
     schedule.every(5).seconds.do(check_and_send_logs)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("プログラムを終了します...")
