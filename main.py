@@ -25,11 +25,11 @@ def get_docker_logs():
         )
         if result.returncode != 0:
             print(f"エラー: {result.stderr}")
-            return ""
+            return "error 1"
         return result.stdout
     except Exception as e:
         print(f"例外が発生しました: {e}")
-        return ""
+        return "error 2"
 
 def send_to_discord(message):
     try:
@@ -54,7 +54,7 @@ def save_current_logs(logs):
 
 def check_and_send_logs():
     current_logs = get_docker_logs()
-    if not current_logs:
+    if not current_logs or "error" in current_logs:
         print("送信するログがありません。")
         return
 
@@ -64,13 +64,18 @@ def check_and_send_logs():
         print("ログに変更はありません。")
         return
 
-    diff = ''.join(difflib.unified_diff(previous_logs.splitlines(keepends=True), current_logs.splitlines(keepends=True)))
+    diff = list(difflib.unified_diff(previous_logs.splitlines(), current_logs.splitlines(), lineterm=''))
+    diff = [line[1:] for line in diff if line.startswith('+') and not line.startswith('+++')]
+
+    if not diff:
+        print("ログに差分はありません。")
+        return
 
     save_current_logs(current_logs)
 
     max_length = 2000  # Discordのメッセージは最大2000文字
     for i in range(0, len(diff), max_length):
-        send_to_discord(diff[i:i + max_length])
+        send_to_discord('\n'.join(diff[i:i + max_length]))
 
 if __name__ == "__main__":
     # 5秒ごとにcheck_and_send_logs関数を実行するスケジュールを設定
