@@ -10,23 +10,25 @@ import time
 load_dotenv()
 
 # 環境変数から値を取得
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
-DOCKER_COMPOSE_PATH = os.path.expanduser(os.getenv("DOCKER_COMPOSE_PATH"))
-DOCKER_COMPOSE_FILE = os.getenv("DOCKER_COMPOSE_FILE")
-PREVIOUS_LOG_FILE = os.path.join(DOCKER_COMPOSE_PATH, "previous_logs.txt")
-SENT_LOG_FILE = os.path.join(DOCKER_COMPOSE_PATH, "sent_logs.txt")
+webhook_url = os.getenv("WEBHOOK_URL")
+docker_compose_path = os.path.expanduser(os.getenv("DOCKER_COMPOSE_PATH")) # パスの展開
+docker_compose_fule = os.getenv("DOCKER_COMPOSE_FILE")
+previous_log_file = os.path.join(docker_compose_path, "previous_logs.txt")
+send_log_file = os.path.join(docker_compose_path, "sent_logs.txt")
 
+# Dockerコンテナのログを取得
 def get_docker_logs():
     try:
         result = subprocess.run(
-            ['docker', 'compose', '-f', os.path.join(DOCKER_COMPOSE_PATH, DOCKER_COMPOSE_FILE), 'logs', '--no-color'],
+            ['docker', 'compose', '-f', os.path.join(docker_compose_path, docker_compose_fule), 'logs', '--no-color'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
-        if result.returncode != 0:
+        if result.returncode != 0: # エラーが発生した場合
             print(f"エラー: {result.stderr}")
             return "error 1"
+        # 正常に取得できた場合はログを返す
         return result.stdout
     except Exception as e:
         print(f"例外が発生しました: {e}")
@@ -41,7 +43,7 @@ def send_to_discord(message):
         for line in message_lines:
             if len(current_chunk) + len(line) + 1 > max_length:
                 data = {"content": current_chunk}
-                response = requests.post(WEBHOOK_URL, json=data)
+                response = requests.post(webhook_url, json=data)
                 if response.status_code != 204:
                     print(f"メッセージの送信に失敗しました: {response.status_code}, {response.text}")
                 current_chunk = line
@@ -49,10 +51,10 @@ def send_to_discord(message):
                 if current_chunk:
                     current_chunk += "\n"
                 current_chunk += line
-        
+
         if current_chunk:
             data = {"content": current_chunk}
-            response = requests.post(WEBHOOK_URL, json=data)
+            response = requests.post(webhook_url, json=data)
             if response.status_code == 204:
                 print("メッセージが正常に送信されました")
             else:
@@ -62,28 +64,29 @@ def send_to_discord(message):
         print(f"Discordへのメッセージ送信中に例外が発生しました: {e}")
 
 def get_previous_logs():
-    if not os.path.exists(PREVIOUS_LOG_FILE):
+    if not os.path.exists(previous_log_file):
         return ""
-    with open(PREVIOUS_LOG_FILE, 'r') as file:
+    with open(previous_log_file, 'r') as file:
         return file.read()
 
 def get_sent_logs():
-    if not os.path.exists(SENT_LOG_FILE):
+    if not os.path.exists(send_log_file):
         return ""
-    with open(SENT_LOG_FILE, 'r') as file:
+    with open(send_log_file, 'r') as file:
         return file.read()
 
 def save_current_logs(logs):
-    with open(PREVIOUS_LOG_FILE, 'w') as file:
+    with open(previous_log_file, 'w') as file:
         file.write(logs)
 
 def save_sent_logs(logs):
-    with open(SENT_LOG_FILE, 'w') as file:
+    with open(send_log_file, 'w') as file:
         file.write(logs)
 
+# ログの差分を確認して、Discordに送信する/5秒ごとに
 def check_and_send_logs():
     current_logs = get_docker_logs()
-    if current_logs.startswith("error"):
+    if current_logs.startswith("error"): # エラーが発生した場合
         print("Dockerログの取得に失敗しました。")
         return
     if not current_logs:
