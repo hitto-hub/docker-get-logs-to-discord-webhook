@@ -12,15 +12,16 @@ load_dotenv()
 # 環境変数から値を取得
 webhook_url = os.getenv("WEBHOOK_URL")
 docker_compose_path = os.path.expanduser(os.getenv("DOCKER_COMPOSE_PATH")) # パスの展開
-docker_compose_fule = os.getenv("DOCKER_COMPOSE_FILE")
+docker_compose_file_name = os.getenv("DOCKER_COMPOSE_FILE")
 previous_log_file = os.path.join(docker_compose_path, "previous_logs.txt")
 send_log_file = os.path.join(docker_compose_path, "sent_logs.txt")
+docker_compose_file_path = os.path.join(docker_compose_path, docker_compose_file_name)
 
 # Dockerコンテナのログを取得
 def get_docker_logs():
     try:
         result = subprocess.run(
-            ['docker', 'compose', '-f', os.path.join(docker_compose_path, docker_compose_fule), 'logs', '--no-color'],
+            ['docker', 'compose', '-f', docker_compose_file_path, 'logs', '--no-color'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
