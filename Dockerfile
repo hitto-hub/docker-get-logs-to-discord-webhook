@@ -11,4 +11,4 @@ COPY log_to_webhook.py /app/log_to_webhook.py
 WORKDIR /app
 
 # コンテナ起動時にプログラムを実行
-CMD ["python", "log_to_webhook.py"]
+CMD ["python", "docker_log_sender.py"]
