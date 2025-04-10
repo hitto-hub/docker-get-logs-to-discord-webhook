@@ -7,6 +7,10 @@ WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 if not WEBHOOK_URL:
     raise Exception("環境変数 WEBHOOK_URL が設定されていません")
 
+CONTAINER_NAME = os.environ.get("CONTAINER_NAME")
+if not CONTAINER_NAME:
+    raise Exception("環境変数 CONTAINER_NAME が設定されていません")
+
 def send_to_webhook(message):
     payload = {"content": message}
     max_retries = 5
@@ -32,7 +36,7 @@ def send_to_webhook(message):
 def main():
     client = docker.from_env()
     try:
-        container = client.containers.get("mc")
+        container = client.containers.get(CONTAINER_NAME)
     except Exception as e:
         print(f"対象コンテナの取得エラー: {e}")
         return
