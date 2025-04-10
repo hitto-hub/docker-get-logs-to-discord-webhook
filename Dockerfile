@@ -5,7 +5,7 @@ FROM python:3.13-slim
 RUN pip install docker requests
 
 # プログラムファイルをコンテナ内にコピー
-COPY log_to_webhook.py /app/log_to_webhook.py
+COPY docker_log_sender.py /app/docker_log_sender.py
 
 # 作業ディレクトリの設定
 WORKDIR /app
